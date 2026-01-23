@@ -1,11 +1,11 @@
+from flask import Flask, request, jsonify
 import os
 import requests
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-TELEGRAM_API = f"https://api.telegram.org/bot{8392781220:AAG6KzoEZe_EyBLU4m5uft8DJnmKU8w_JGo}"
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 @app.route("/")
 def home():
@@ -18,26 +18,14 @@ def test():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.json
+    text = str(data)
 
-    chat_id = data["message"]["chat"]["id"]
-    text = data["message"].get("text", "")
+    if BOT_TOKEN and CHAT_ID:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        payload = {"chat_id": CHAT_ID, "text": text}
+        requests.post(url, json=payload)
 
-    if text == "/start":
-        send_message(chat_id, "👋 Bienvenue sur Signal Forex IA")
-    elif text.lower() == "test":
-        send_message(chat_id, "✅ Bot opérationnel")
-    else:
-        send_message(chat_id, "📡 Signal reçu, analyse en cours...")
-
-    return jsonify({"ok": True})
-
-def send_message(chat_id, text):
-    url = f"{TELEGRAM_API}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text
-    }
-    requests.post(url, json=payload)
+    return jsonify({"success": True})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
